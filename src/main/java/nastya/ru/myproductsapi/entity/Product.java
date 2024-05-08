@@ -1,32 +1,30 @@
-package nastya.ru.myproductsapi.model;
+package nastya.ru.myproductsapi.entity;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.util.Objects;
 import java.util.UUID;
-
+@Entity
+@Table(name = "products")
 public class Product {
+    @Id
+    @Column(name = "id")
     @NotNull
     private UUID id;
+    @Column(name = "title")
     @NotEmpty
     @Size(max = 255)
     private String title;
+    @Column(name = "description")
     @Size(max = 4096)
     private String description;
+    @Column(name = "price")
     @Min(0)
     private double price;
+    @Column(name = "is_stock")
     private boolean isStock;
-
-    public Product(UUID id, String title, String description, double price, boolean isStock) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.price = price;
-        this.isStock = isStock;
-    }
 
     public Product() {
     }
@@ -70,16 +68,5 @@ public class Product {
     public void setId(UUID id) {
         this.id = id;
     }
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Product product = (Product) o;
-        return Double.compare(price, product.price) == 0 && isStock == product.isStock && Objects.equals(id, product.id) && Objects.equals(title, product.title) && Objects.equals(description, product.description);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, title, description, price, isStock);
-    }
 }
