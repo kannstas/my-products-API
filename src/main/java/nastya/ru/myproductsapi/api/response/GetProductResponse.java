@@ -9,6 +9,9 @@ public class GetProductResponse {
     private double price;
     private boolean isStock;
 
+    public GetProductResponse() {
+    }
+
     public UUID getId() {
         return id;
     }

@@ -8,11 +8,15 @@ import nastya.ru.myproductsapi.entity.Product;
 import nastya.ru.myproductsapi.exception.IdNotFoundException;
 import nastya.ru.myproductsapi.repository.ProductRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+
+import static nastya.ru.myproductsapi.util.filter.ProductSpecification.*;
 
 @Service
 public class ProductService {
@@ -42,6 +46,36 @@ public class ProductService {
         return new GetAllProductResponse(products);
     }
 
+    @Transactional(readOnly = true)
+    public GetAllProductResponse findByCriteria(String sort, String title, Double minPrice, Double maxPrice, Boolean isStock) {
+
+        Specification<Product> spec = Specification.where(null);
+
+        if (title != null && !title.isEmpty()) {
+            spec = spec.and(titleContains(title));
+        }
+        if (minPrice != null) {
+            spec = spec.and(priceGreaterThan(minPrice));
+        }
+        if (maxPrice != null) {
+            spec = spec.and(priceLessThan(maxPrice));
+        }
+        if (isStock != null) {
+            spec = spec.and(isStock(isStock));
+        }
+        if (sort != null && !sort.isEmpty()) {
+            Sort sortOrder = Sort.by(sort).ascending();
+            return new GetAllProductResponse(productRepository.findAll(spec, sortOrder)
+                    .stream()
+                    .map(this::toResponse)
+                    .toList());
+        }
+        return new GetAllProductResponse(productRepository.findAll(spec)
+                .stream()
+                .map(this::toResponse)
+                .toList());
+    }
+
     @Transactional
     public void save(CreateProductRequest request) {
         Product product = toProduct(request);
@@ -62,7 +96,7 @@ public class ProductService {
 
     @Transactional
     public void delete(UUID id) {
-       productRepository.deleteById(id);
+        productRepository.deleteById(id);
     }
 
     private GetProductResponse toResponse(Product product) {

@@ -3,12 +3,16 @@ package nastya.ru.myproductsapi.controller;
 import jakarta.validation.Valid;
 import nastya.ru.myproductsapi.api.request.CreateProductRequest;
 import nastya.ru.myproductsapi.api.request.UpdateProductRequest;
+import nastya.ru.myproductsapi.api.response.GetAllProductResponse;
 import nastya.ru.myproductsapi.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+
+import static nastya.ru.myproductsapi.util.validator.ProductRequestValidator.validatePrice;
+import static nastya.ru.myproductsapi.util.validator.ProductRequestValidator.validateSort;
 
 @RestController
 @RequestMapping("/products")
@@ -20,12 +24,26 @@ public class ProductController {
     }
 
     @GetMapping
-    public Object find (@RequestParam (required = false) UUID id) {
-        if(id!= null) {
+    public Object find(@RequestParam(required = false) UUID id) {
+        if (id != null) {
             return productService.findById(id);
         } else {
             return productService.findAll();
         }
+    }
+
+    @GetMapping("/filter")
+    public GetAllProductResponse findAllProductsWithFilter(
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Boolean isStock) {
+
+        validateSort(sort);
+        validatePrice(minPrice, maxPrice);
+
+        return productService.findByCriteria(sort, title, minPrice, maxPrice, isStock);
     }
 
     @PostMapping
