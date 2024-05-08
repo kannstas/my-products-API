@@ -1,0 +1,32 @@
+version: '3.8'
+
+volumes:
+  mypostgres:
+
+services:
+  mypostgres:
+    container_name: mypostgres
+    image: postgres:16
+    restart: always
+    ports:
+      - "15432:5432"
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - mypostgres:/var/lib/postgresql/data
+
+  my_products_app:
+    build:
+     context: .
+     dockerfile: Dockerfile
+    container_name: my_products_app
+    restart: always
+    ports:
+      - "8181:8181"
+    depends_on:
+      - mypostgres
+    environment:
+      - SERVER_PORT=8181
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://mypostgres:5432/my_products_db
