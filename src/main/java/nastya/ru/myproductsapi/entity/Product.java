@@ -1,14 +1,12 @@
 package nastya.ru.myproductsapi.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
 import java.util.UUID;
 @Entity
 @Table(name = "products")
@@ -17,18 +15,28 @@ public class Product {
     @Column(name = "id")
     @NotNull
     private UUID id;
+
     @Column(name = "title")
     @NotEmpty
     @Size(max = 255)
     private String title;
+
     @Column(name = "description")
     @Size(max = 4096)
     private String description;
+
     @Column(name = "price")
     @Min(0)
     private double price;
-    @Column(name = "is_stock")
-    private boolean isStock;
+
+    @Column(name = "quantity")
+    private Integer quantity;
+
+    @OneToMany(mappedBy = "receiptedProduct")
+    private List<Receipt> receiptList;
+
+    @OneToMany(mappedBy = "soldProduct")
+    private List<Sale> saleList;
 
     public Product() {
     }
@@ -57,12 +65,12 @@ public class Product {
         this.price = price;
     }
 
-    public boolean isStock() {
-        return isStock;
+    public Integer getQuantity() {
+        return quantity;
     }
 
-    public void setStock(boolean stock) {
-        isStock = stock;
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 
     public UUID getId() {
@@ -73,4 +81,19 @@ public class Product {
         this.id = id;
     }
 
+    public List<Receipt> getReceiptList() {
+        return receiptList;
+    }
+
+    public void setReceiptList(List<Receipt> receiptList) {
+        this.receiptList = receiptList;
+    }
+
+    public List<Sale> getSaleList() {
+        return saleList;
+    }
+
+    public void setSaleList(List<Sale> saleList) {
+        this.saleList = saleList;
+    }
 }

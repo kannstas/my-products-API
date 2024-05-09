@@ -1,4 +1,4 @@
-package nastya.ru.myproductsapi.api.response;
+package nastya.ru.myproductsapi.api.response.product;
 
 import java.util.List;
 

@@ -1,39 +1,24 @@
-package nastya.ru.myproductsapi.api.request;
+package nastya.ru.myproductsapi.api.request.product;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.util.UUID;
-
-public class UpdateProductRequest {
-    @NotNull
-    private UUID id;
+public class CreateProductRequest {
     @NotEmpty
     @Size(max = 255)
     private String title;
+
     @Size(max = 4096)
     private String description;
+
     @Min(0)
     private double price;
-    private boolean isStock;
 
-    public UpdateProductRequest(UUID id, String title, String description, double price, boolean isStock) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.price = price;
-        this.isStock = isStock;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    @Min(1)
+    @NotNull
+    private Integer quantity;
 
     public String getTitle() {
         return title;
@@ -59,11 +44,11 @@ public class UpdateProductRequest {
         this.price = price;
     }
 
-    public boolean isStock() {
-        return isStock;
+    public Integer getQuantity() {
+        return quantity;
     }
 
-    public void setStock(boolean stock) {
-        isStock = stock;
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 }

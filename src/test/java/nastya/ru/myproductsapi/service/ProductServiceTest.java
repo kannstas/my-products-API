@@ -1,9 +1,9 @@
 package nastya.ru.myproductsapi.service;
 
-import nastya.ru.myproductsapi.api.request.CreateProductRequest;
-import nastya.ru.myproductsapi.api.request.UpdateProductRequest;
-import nastya.ru.myproductsapi.api.response.GetAllProductResponse;
-import nastya.ru.myproductsapi.api.response.GetProductResponse;
+import nastya.ru.myproductsapi.api.request.product.CreateProductRequest;
+import nastya.ru.myproductsapi.api.request.product.UpdateProductRequest;
+import nastya.ru.myproductsapi.api.response.product.GetAllProductResponse;
+import nastya.ru.myproductsapi.api.response.product.GetProductResponse;
 import nastya.ru.myproductsapi.entity.Product;
 import nastya.ru.myproductsapi.exception.IdNotFoundException;
 import nastya.ru.myproductsapi.repository.ProductRepository;
@@ -13,7 +13,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.modelmapper.ModelMapper;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,15 +21,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
-    @Mock
-    private ModelMapper modelMapper;
     @InjectMocks
     private ProductService productService;
 
@@ -45,15 +41,14 @@ public class ProductServiceTest {
         expectedResponse.setTitle(product.getTitle());
 
         when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
-        when(modelMapper.map(product, GetProductResponse.class)).thenReturn(expectedResponse);
 
         GetProductResponse response = productService.findById(product.getId());
 
         verify(productRepository, times(1)).findById(product.getId());
 
-        assertThat(response)
-                .usingRecursiveComparison()
-                .isEqualTo(product);
+        assertThat(product.getId()).isEqualTo(response.getId());
+        assertThat(product.getTitle()).isEqualTo(response.getTitle());
+
     }
 
     @Test
@@ -63,7 +58,7 @@ public class ProductServiceTest {
         product.setTitle("Test Title");
         product.setDescription("Test Description");
         product.setPrice(9.53);
-        product.setStock(true);
+        product.setQuantity(10);
 
         when(productRepository.findById(product.getId())).thenReturn(Optional.empty());
 
@@ -77,50 +72,59 @@ public class ProductServiceTest {
         Product product1 = new Product();
         product1.setId(UUID.randomUUID());
         product1.setTitle("Product 1");
+        product1.setPrice(9.33);
 
         Product product2 = new Product();
         product2.setId(UUID.randomUUID());
         product2.setTitle("Product 2");
+        product2.setPrice(302.1);
 
         List<Product> productList = Arrays.asList(product1, product2);
 
+        List<GetProductResponse> expectedProductsResponse = getGetProductResponses(product1, product2);
+
+        when(productRepository.findAll()).thenReturn(productList);
+
+        GetAllProductResponse response = productService.findAll();
+        GetAllProductResponse expectedResponse = new GetAllProductResponse(expectedProductsResponse);
+
+        assertThat(expectedResponse)
+                .usingRecursiveComparison()
+                .isEqualTo(response);
+
+    }
+
+    private static List<GetProductResponse> getGetProductResponses(Product product1, Product product2) {
         GetProductResponse productResponse1 = new GetProductResponse();
         productResponse1.setId(product1.getId());
         productResponse1.setTitle(product1.getTitle());
+        productResponse1.setPrice(product1.getPrice());
 
         GetProductResponse productResponse2 = new GetProductResponse();
         productResponse2.setId(product2.getId());
         productResponse2.setTitle(product2.getTitle());
+        productResponse2.setPrice(product2.getPrice());
 
         List<GetProductResponse> expectedProductsResponse = Arrays.asList(productResponse1, productResponse2);
-
-        when(productRepository.findAll()).thenReturn(productList);
-        when(modelMapper.map(product1, GetProductResponse.class)).thenReturn(productResponse1);
-        when(modelMapper.map(product2, GetProductResponse.class)).thenReturn(productResponse2);
-
-        GetAllProductResponse response = productService.findAll();
-
-        assertEquals(expectedProductsResponse, response.getProductResponses());
-
+        return expectedProductsResponse;
     }
 
 
     @Test
     void testSaveProductSuccess() {
-        CreateProductRequest request = new CreateProductRequest(
-                "Test Title",
-                "Test Description",
-                9.53,
-                true);
+        CreateProductRequest request = new CreateProductRequest();
+        request.setTitle("Test Title");
+        request.setDescription("Test Description");
+        request.setPrice(9.56);
+        request.setQuantity(10);
 
         Product product = new Product();
         product.setId(UUID.randomUUID());
         product.setTitle("Test Title");
         product.setDescription("Test Description");
         product.setPrice(9.53);
-        product.setStock(true);
+        product.setQuantity(10);
 
-        when(modelMapper.map(request, Product.class)).thenReturn(product);
 
         productService.save(request);
 
@@ -129,28 +133,27 @@ public class ProductServiceTest {
 
         Product productToBeSaved = captor.getValue();
 
-        assertThat(productToBeSaved.getTitle()).isEqualTo(request.getTitle());
-        assertThat(productToBeSaved.getDescription()).isEqualTo(request.getDescription());
-        assertThat(productToBeSaved.getPrice()).isEqualTo(request.getPrice());
-        assertThat(productToBeSaved.isStock()).isEqualTo(request.isStock());
+        assertThat(request)
+                .usingRecursiveComparison()
+                .isEqualTo(productToBeSaved);
     }
 
     @Test
     void testUpdateProductSuccess() {
         UUID id = UUID.randomUUID();
-        UpdateProductRequest request = new UpdateProductRequest(
-                id,
-                "Test Title2",
-                "Test Description2",
-                10.53,
-                false);
+        UpdateProductRequest request = new UpdateProductRequest();
+        request.setId(id);
+        request.setTitle("Test Title");
+        request.setDescription("Test Description");
+        request.setPrice(9.56);
+        request.setQuantity(10);
 
         Product existingProduct = new Product();
         existingProduct.setId(id);
         existingProduct.setTitle("Old Title");
         existingProduct.setDescription("Old Description");
         existingProduct.setPrice(10.0);
-        existingProduct.setStock(true);
+        existingProduct.setQuantity(10);
 
         when(productRepository.findById(request.getId())).thenReturn(Optional.of(existingProduct));
 

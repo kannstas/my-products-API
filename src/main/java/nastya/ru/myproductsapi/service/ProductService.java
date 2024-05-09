@@ -1,38 +1,39 @@
 package nastya.ru.myproductsapi.service;
 
-import nastya.ru.myproductsapi.api.request.CreateProductRequest;
-import nastya.ru.myproductsapi.api.request.UpdateProductRequest;
-import nastya.ru.myproductsapi.api.response.GetAllProductResponse;
-import nastya.ru.myproductsapi.api.response.GetProductResponse;
+import nastya.ru.myproductsapi.api.request.product.CreateProductRequest;
+import nastya.ru.myproductsapi.api.request.product.UpdateProductRequest;
+import nastya.ru.myproductsapi.api.response.product.GetAllProductResponse;
+import nastya.ru.myproductsapi.api.response.product.GetProductResponse;
 import nastya.ru.myproductsapi.entity.Product;
 import nastya.ru.myproductsapi.exception.IdNotFoundException;
 import nastya.ru.myproductsapi.repository.ProductRepository;
-import org.modelmapper.ModelMapper;
+import nastya.ru.myproductsapi.util.conversion.Convert;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+import static nastya.ru.myproductsapi.util.conversion.Convert.toProduct;
+import static nastya.ru.myproductsapi.util.conversion.Convert.toResponse;
 import static nastya.ru.myproductsapi.util.filter.ProductSpecification.*;
 
 @Service
 public class ProductService {
     private final ProductRepository productRepository;
-    private final ModelMapper modelMapper;
 
-    public ProductService(ProductRepository productRepository, ModelMapper modelMapper) {
+    public ProductService(ProductRepository productRepository) {
         this.productRepository = productRepository;
-        this.modelMapper = modelMapper;
     }
 
     @Transactional(readOnly = true)
     public GetProductResponse findById(UUID id) {
         return toResponse(
                 productRepository.findById(id)
-                        .orElseThrow(() -> new IdNotFoundException("product", id))
+                        .orElseThrow(() -> new IdNotFoundException("products", "product", id))
         );
     }
 
@@ -40,14 +41,18 @@ public class ProductService {
     public GetAllProductResponse findAll() {
         List<GetProductResponse> products = productRepository.findAll()
                 .stream()
-                .map(this::toResponse)
+                .map(Convert::toResponse)
                 .toList();
 
         return new GetAllProductResponse(products);
     }
 
     @Transactional(readOnly = true)
-    public GetAllProductResponse findByCriteria(String sort, String title, Double minPrice, Double maxPrice, Boolean isStock) {
+    public GetAllProductResponse findByCriteria(String sort,
+                                                String title,
+                                                Double minPrice,
+                                                Double maxPrice,
+                                                Integer quantity) {
 
         Specification<Product> spec = Specification.where(null);
 
@@ -60,19 +65,19 @@ public class ProductService {
         if (maxPrice != null) {
             spec = spec.and(priceLessThan(maxPrice));
         }
-        if (isStock != null) {
-            spec = spec.and(isStock(isStock));
+        if (quantity != null) {
+            spec = spec.and(quantityIs(quantity));
         }
         if (sort != null && !sort.isEmpty()) {
             Sort sortOrder = Sort.by(sort).ascending();
             return new GetAllProductResponse(productRepository.findAll(spec, sortOrder)
                     .stream()
-                    .map(this::toResponse)
+                    .map(Convert::toResponse)
                     .toList());
         }
         return new GetAllProductResponse(productRepository.findAll(spec)
                 .stream()
-                .map(this::toResponse)
+                .map(Convert::toResponse)
                 .toList());
     }
 
@@ -86,12 +91,13 @@ public class ProductService {
     @Transactional
     public void update(UpdateProductRequest request) {
         Product product = productRepository.findById(request.getId())
-                .orElseThrow(() -> new IdNotFoundException("product", request.getId()));
+                .orElseThrow(() -> new IdNotFoundException("products", "product", request.getId()));
 
-        product.setTitle(request.getTitle());
-        product.setDescription(request.getDescription());
-        product.setPrice(request.getPrice());
-        product.setStock(request.isStock());
+        Optional.ofNullable(request.getTitle()).ifPresent(product::setTitle);
+        Optional.ofNullable(request.getDescription()).ifPresent(product::setDescription);
+        Optional.of(request.getPrice()).ifPresent(product::setPrice);
+        Optional.ofNullable(request.getQuantity()).ifPresent(product::setQuantity);
+
     }
 
     @Transactional
@@ -99,11 +105,4 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    private GetProductResponse toResponse(Product product) {
-        return modelMapper.map(product, GetProductResponse.class);
-    }
-
-    private Product toProduct(CreateProductRequest productRequest) {
-        return modelMapper.map(productRequest, Product.class);
-    }
 }

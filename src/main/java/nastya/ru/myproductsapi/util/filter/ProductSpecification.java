@@ -4,9 +4,10 @@ import nastya.ru.myproductsapi.entity.Product;
 import org.springframework.data.jpa.domain.Specification;
 
 public class ProductSpecification {
-    public static Specification<Product> isStock(boolean isStock) {
+
+    public static Specification<Product> quantityIs(Integer quantity) {
         return (productRoot, cq, cb) ->
-                cb.equal(productRoot.get("isStock"), isStock);
+                cb.equal(productRoot.get("quantity"), quantity);
     }
 
     public static Specification<Product> titleContains(String title) {

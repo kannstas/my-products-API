@@ -1,9 +1,9 @@
 package nastya.ru.myproductsapi.controller;
 
 import jakarta.validation.Valid;
-import nastya.ru.myproductsapi.api.request.CreateProductRequest;
-import nastya.ru.myproductsapi.api.request.UpdateProductRequest;
-import nastya.ru.myproductsapi.api.response.GetAllProductResponse;
+import nastya.ru.myproductsapi.api.request.product.CreateProductRequest;
+import nastya.ru.myproductsapi.api.request.product.UpdateProductRequest;
+import nastya.ru.myproductsapi.api.response.product.GetAllProductResponse;
 import nastya.ru.myproductsapi.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,12 +38,12 @@ public class ProductController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Boolean isStock) {
+            @RequestParam(required = false) Integer quantity) {
 
         validateSort(sort);
         validatePrice(minPrice, maxPrice);
 
-        return productService.findByCriteria(sort, title, minPrice, maxPrice, isStock);
+        return productService.findByCriteria(sort, title, minPrice, maxPrice, quantity);
     }
 
     @PostMapping
